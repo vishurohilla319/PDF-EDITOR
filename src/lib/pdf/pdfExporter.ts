@@ -135,34 +135,60 @@ export async function exportPDF({
       (r) => r.pageIndex === originalPageIndex
     );
     for (const rep of pageReplacements) {
-      // Step A: Cover original text so it is DELETED from the exported PDF
+      const fontSize = rep.fontSize || (rep.originalBounds.height > 0 ? rep.originalBounds.height * 0.8 : 12);
+      const hasDescenders = /[gjpqyQ,;]/.test(rep.originalText || rep.newText || '');
+      const descenderOffset = hasDescenders
+        ? Math.max(1.2, fontSize * 0.22)
+        : Math.max(0.75, fontSize * 0.08);
+      const ascentHeight = Math.max(2.0, fontSize * 0.95);
+      const minSafeHeight = ascentHeight + descenderOffset;
+      const hPad = Math.min(1.2, Math.max(0.6, fontSize * 0.06));
+
+      // Step A: Cover original text so it is cleanly erased without leaving dots or clipping lines
       if (
         rep.whitewashOriginal !== false &&
         rep.backgroundColor &&
         rep.backgroundColor !== 'transparent' &&
         rep.backgroundColor !== 'none'
       ) {
+        let coverX = rep.originalBounds.x;
+        let coverY = rep.originalBounds.y;
+        let coverW = rep.originalBounds.width;
+        let coverH = rep.originalBounds.height;
+
+        // Defensive: If originalBounds was computed with old small bounds (<= 0.85 * fontSize) or 0 descenderOffset,
+        // automatically expand it so character apexes, descenders, and curve overshoots never peek through as dots
+        if (coverH < minSafeHeight) {
+          coverY -= descenderOffset;
+          coverH = minSafeHeight;
+          coverX -= hPad;
+          coverW += hPad * 2;
+        }
+
         outPage.drawRectangle({
-          x: rep.originalBounds.x,
-          y: rep.originalBounds.y,
-          width: rep.originalBounds.width,
-          height: rep.originalBounds.height,
+          x: coverX,
+          y: coverY,
+          width: coverW,
+          height: coverH,
           color: hexToRgb(rep.backgroundColor),
           opacity: 1.0,
         });
       }
 
-      // Step B: Draw replacement text at target coordinates with transparent box background
+      // Step B: Draw replacement text at exact baseline coordinates
       const posX = rep.x !== undefined ? rep.x : rep.originalBounds.x;
       const posY = rep.y !== undefined ? rep.y : rep.originalBounds.y;
 
       const font = getFont(rep.fontFamily, rep.fontWeight === 'bold', rep.fontStyle === 'italic');
       const sanitized = sanitizeTextForPdf(rep.newText);
-      const fontSize = rep.fontSize || rep.originalBounds.height * 0.8;
-      const baselineY = posY + (fontSize * 0.15);
+
+      // In PDF coordinate space, outPage.drawText expects the text BASELINE.
+      // Since bounds.y is at (baseline - descenderOffset), the true baseline is posY + descenderOffset.
+      const baselineY = posY + descenderOffset;
+      const textX = posX + hPad;
 
       outPage.drawText(sanitized, {
-        x: posX,
+        x: textX,
         y: baselineY,
         size: fontSize,
         font: font,

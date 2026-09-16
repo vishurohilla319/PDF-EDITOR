@@ -29,16 +29,25 @@ export async function extractTextItemsFromPage(
     const width = item.width && item.width > 0 ? item.width : str.length * (fontSize * 0.55);
 
     // In PDF space, baseline is at ty.
-    // Check if string contains descenders (g, j, p, q, y)
-    const hasDescenders = /[gjpqy]/.test(str);
-    const descenderOffset = hasDescenders ? fontSize * 0.18 : 0;
-    const glyphHeight = fontSize * 0.82 + descenderOffset;
+    // Check if string contains descenders (g, j, p, q, y, Q, or low punctuation , ;)
+    const hasDescenders = /[gjpqyQ,;]/.test(str);
+    // Even without full descenders, fonts have bottom curves/overshoot (0, 3, 5, 6, 8, 9, etc.)
+    // and rasterizer anti-aliasing that extends below baseline by ~0.08 * fontSize (min 0.75 pt)
+    const descenderOffset = hasDescenders
+      ? Math.max(1.2, fontSize * 0.22)
+      : Math.max(0.75, fontSize * 0.08);
+
+    // Font ascenders, capital letters, and numbers reach up to ~0.92-0.95 * fontSize
+    const ascentHeight = Math.max(2.0, fontSize * 0.95);
+
+    // Horizontal padding to eliminate side edge subpixel fringes and anti-aliasing specks
+    const hPad = Math.min(1.2, Math.max(0.6, fontSize * 0.06));
 
     const bounds = {
-      x: tx,
+      x: tx - hPad,
       y: ty - descenderOffset,
-      width: width,
-      height: glyphHeight,
+      width: width + hPad * 2,
+      height: ascentHeight + descenderOffset,
     };
 
     items.push({
