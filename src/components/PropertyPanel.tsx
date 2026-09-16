@@ -221,8 +221,8 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
               </p>
             </div>
 
-            {/* Whitewash & Transparency Options */}
-            <div className="pt-2 border-t border-slate-800 space-y-2">
+            {/* Whitewash & Document Background Match */}
+            <div className="pt-2 border-t border-slate-800 space-y-3">
               <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
                 <input
                   type="checkbox"
@@ -237,19 +237,50 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
                 <span>Whitewash original text before edit</span>
               </label>
 
-              <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
-                <input
-                  type="checkbox"
-                  checked={!replacement.backgroundColor || replacement.backgroundColor === 'transparent'}
-                  onChange={(e) =>
-                    onUpdateTextReplacement(replacement.id, {
-                      backgroundColor: e.target.checked ? 'transparent' : '#ffffff',
-                    })
-                  }
-                  className="rounded bg-slate-800 border-slate-700 text-blue-600 focus:ring-0"
-                />
-                <span>Transparent box (never overlays lines)</span>
-              </label>
+              {replacement.whitewashOriginal !== false && (
+                <div>
+                  <label className="text-[11px] text-slate-400 block mb-1">
+                    Doc Background Match (Cover Color)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={
+                        replacement.backgroundColor && replacement.backgroundColor !== 'transparent'
+                          ? replacement.backgroundColor
+                          : '#ffffff'
+                      }
+                      onChange={(e) =>
+                        onUpdateTextReplacement(replacement.id, {
+                          backgroundColor: e.target.value,
+                        })
+                      }
+                      className="w-7 h-7 rounded border border-slate-700 bg-slate-800 cursor-pointer p-0.5"
+                      title="Adjust document background match color"
+                    />
+                    <div className="flex flex-wrap gap-1">
+                      {['#ffffff', '#fdfbf7', '#f4f4f2', '#f2f5fc', '#f3f4f6', '#e2e8f0'].map((bg) => (
+                        <button
+                          key={bg}
+                          onClick={() =>
+                            onUpdateTextReplacement(replacement.id, { backgroundColor: bg })
+                          }
+                          style={{ backgroundColor: bg }}
+                          className={`w-4 h-4 rounded border transition ${
+                            replacement.backgroundColor === bg
+                              ? 'border-blue-400 scale-110'
+                              : 'border-slate-700'
+                          }`}
+                          title={`Doc color: ${bg}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <span className="text-[9px] text-slate-500 mt-0.5 block">
+                    Auto-sampled from document canvas to match paper/cell tone.
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         )}

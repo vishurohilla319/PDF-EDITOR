@@ -30,6 +30,7 @@ import {
 import { InlineTextEditor } from './TextEditor';
 import { SelectedItem } from '../hooks/useSelection';
 import { Move } from 'lucide-react';
+import { sampleDocumentBackgroundColor } from '../lib/pdf/colorSampler';
 
 interface PDFPageProps {
   page: PageInfo;
@@ -98,6 +99,7 @@ export const PDFPage: React.FC<PDFPageProps> = ({
     canvasY: number;
     width: number;
     height: number;
+    detectedBgColor: string;
   } | null>(null);
 
   const [addingTextPos, setAddingTextPos] = useState<{ x: number; y: number } | null>(null);
@@ -385,18 +387,52 @@ export const PDFPage: React.FC<PDFPageProps> = ({
     }
   };
 
-  // Click on existing text item when EDIT TEXT is active
+  // Click on existing text item when EDIT TEXT or SELECT is active
   const handleTextItemClick = (item: PDFTextItem, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (activeTool === 'editText') {
+    if (activeTool === 'editText' || activeTool === 'select') {
       const cRect = pdfRectToCanvasRect(item.bounds, page.height, scale);
-      setEditingTextItem({
-        item,
-        canvasX: cRect.x,
-        canvasY: cRect.y,
-        width: cRect.width,
-        height: cRect.height,
-      });
+      const detectedBgColor = sampleDocumentBackgroundColor(
+        canvasRef.current,
+        cRect,
+        displayWidth,
+        displayHeight
+      );
+
+      const repId = `rep-${page.pageIndex}-${item.id}`;
+
+      // Initialize replacement in document state if not already created
+      const existingRep = textReplacements.find((r) => r.id === repId);
+      if (!existingRep) {
+        onAddTextReplacement({
+          id: repId,
+          pageIndex: page.pageIndex,
+          originalText: item.str,
+          originalBounds: item.bounds,
+          newText: item.str,
+          fontFamily: 'Helvetica',
+          fontSize: item.fontSize,
+          color: '#000000',
+          backgroundColor: detectedBgColor || '#ffffff',
+          whitewashOriginal: true,
+          x: item.bounds.x,
+          y: item.bounds.y,
+        });
+      }
+
+      // Immediately select the element so Right Property Panel displays all properties
+      onSelectElement(repId, 'replacement', page.pageIndex);
+
+      if (activeTool === 'editText') {
+        setEditingTextItem({
+          item,
+          canvasX: cRect.x,
+          canvasY: cRect.y,
+          width: cRect.width,
+          height: cRect.height,
+          detectedBgColor,
+        });
+      }
     } else if (activeTool === 'highlight') {
       onAddAnnotation({
         id: `highlight-${Date.now()}`,
@@ -431,7 +467,7 @@ export const PDFPage: React.FC<PDFPageProps> = ({
       <canvas ref={canvasRef} className="absolute inset-0 block pointer-events-none" />
 
       {/* 2. Interactive Text Layer for Existing Text Selection / Edit */}
-      {activeTool === 'editText' && (
+      {(activeTool === 'editText' || activeTool === 'select') && (
         <div className="absolute inset-0 pointer-events-none z-10">
           {textItems.map((item) => {
             // Check if this text item is already replaced
@@ -942,9 +978,11 @@ export const PDFPage: React.FC<PDFPageProps> = ({
           width={editingTextItem.width}
           height={editingTextItem.height}
           fontSize={editingTextItem.item.fontSize * scale}
+          backgroundColor={editingTextItem.detectedBgColor || '#ffffff'}
           onCommit={(newText) => {
+            const repId = `rep-${page.pageIndex}-${editingTextItem.item.id}`;
             onAddTextReplacement({
-              id: `rep-${page.pageIndex}-${editingTextItem.item.id}`,
+              id: repId,
               pageIndex: page.pageIndex,
               originalText: editingTextItem.item.str,
               originalBounds: editingTextItem.item.bounds,
@@ -952,14 +990,19 @@ export const PDFPage: React.FC<PDFPageProps> = ({
               fontFamily: 'Helvetica',
               fontSize: editingTextItem.item.fontSize,
               color: '#000000',
-              backgroundColor: 'transparent',
+              backgroundColor: editingTextItem.detectedBgColor || '#ffffff',
               whitewashOriginal: true,
               x: editingTextItem.item.bounds.x,
               y: editingTextItem.item.bounds.y,
             });
+            onSelectElement(repId, 'replacement', page.pageIndex);
             setEditingTextItem(null);
           }}
-          onCancel={() => setEditingTextItem(null)}
+          onCancel={() => {
+            const repId = `rep-${page.pageIndex}-${editingTextItem.item.id}`;
+            onSelectElement(repId, 'replacement', page.pageIndex);
+            setEditingTextItem(null);
+          }}
         />
       )}
 

@@ -10,6 +10,7 @@ interface InlineTextEditorProps {
   fontSize: number;
   fontFamily?: string;
   color?: string;
+  backgroundColor?: string;
   onCommit: (newText: string) => void;
   onCancel: () => void;
 }
@@ -23,6 +24,7 @@ export const InlineTextEditor: React.FC<InlineTextEditorProps> = ({
   fontSize,
   fontFamily = 'Helvetica, Arial, sans-serif',
   color = '#000000',
+  backgroundColor = '#ffffff',
   onCommit,
   onCancel,
 }) => {
@@ -51,9 +53,10 @@ export const InlineTextEditor: React.FC<InlineTextEditorProps> = ({
         left: `${x}px`,
         top: `${y}px`,
         minWidth: `${Math.max(width + 20, 120)}px`,
+        backgroundColor: backgroundColor,
         zIndex: 40,
       }}
-      className="flex items-center gap-1 bg-white p-1 rounded shadow-xl border-2 border-blue-500"
+      className="flex items-center gap-1 p-1 rounded shadow-xl border-2 border-blue-500"
     >
       <input
         ref={inputRef}
