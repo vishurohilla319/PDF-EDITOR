@@ -135,19 +135,19 @@ export async function exportPDF({
       (r) => r.pageIndex === originalPageIndex
     );
     for (const rep of pageReplacements) {
-      // Step A: Whitewash original text before edit at its exact original bounds
-      // Zero excess padding so table grid borders and lines are NEVER covered or erased
-      if (rep.whitewashOriginal !== false) {
-        const coverColor =
-          rep.backgroundColor && rep.backgroundColor !== 'transparent'
-            ? rep.backgroundColor
-            : '#ffffff';
+      // Step A: Cover original text ONLY if whitewashOriginal is explicitly true and NOT transparent
+      if (
+        rep.whitewashOriginal === true &&
+        rep.backgroundColor &&
+        rep.backgroundColor !== 'transparent' &&
+        rep.backgroundColor !== 'none'
+      ) {
         outPage.drawRectangle({
           x: rep.originalBounds.x,
           y: rep.originalBounds.y,
           width: rep.originalBounds.width,
           height: rep.originalBounds.height,
-          color: hexToRgb(coverColor),
+          color: hexToRgb(rep.backgroundColor),
           opacity: 1.0,
         });
       }

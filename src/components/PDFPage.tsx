@@ -413,8 +413,8 @@ export const PDFPage: React.FC<PDFPageProps> = ({
           fontFamily: 'Helvetica',
           fontSize: item.fontSize,
           color: '#000000',
-          backgroundColor: detectedBgColor || '#ffffff',
-          whitewashOriginal: true,
+          backgroundColor: 'transparent',
+          whitewashOriginal: false,
           x: item.bounds.x,
           y: item.bounds.y,
         });
@@ -558,28 +558,29 @@ export const PDFPage: React.FC<PDFPageProps> = ({
           const origRect = pdfRectToCanvasRect(r.originalBounds, page.height, scale);
           const isSelected = selectedItem?.id === r.id;
 
-          const coverColor =
-            r.backgroundColor && r.backgroundColor !== 'transparent'
-              ? r.backgroundColor
-              : '#ffffff';
+          const shouldShowCover =
+            r.whitewashOriginal === true &&
+            r.backgroundColor &&
+            r.backgroundColor !== 'transparent' &&
+            r.backgroundColor !== 'none';
 
           return (
             <React.Fragment key={r.id}>
-              {/* Step A: Whitewash cover over original text before edit */}
-              {r.whitewashOriginal !== false && (
+              {/* Only render cover if explicitly requested and NOT transparent */}
+              {shouldShowCover && (
                 <div
                   style={{
                     left: `${origRect.x}px`,
                     top: `${origRect.y}px`,
                     width: `${origRect.width}px`,
                     height: `${origRect.height}px`,
-                    backgroundColor: coverColor,
+                    backgroundColor: r.backgroundColor,
                   }}
                   className="absolute z-14 pointer-events-none"
                 />
               )}
 
-              {/* Step B: Interactive Transparent Text Box */}
+              {/* Step B: 100% Completely Transparent Text Box */}
               <div
                 onMouseDown={(e) =>
                   startDraggingElement(e, r.id, 'replacement', posX, posY)
@@ -601,8 +602,8 @@ export const PDFPage: React.FC<PDFPageProps> = ({
                   fontFamily: r.fontFamily,
                   lineHeight: `${cRect.height}px`,
                 }}
-                className={`absolute z-20 px-0.5 cursor-grab active:cursor-grabbing whitespace-nowrap select-none transition ${
-                  isSelected ? 'ring-2 ring-blue-500 rounded shadow-md' : 'hover:outline hover:outline-blue-400'
+                className={`absolute z-20 px-0.5 cursor-grab active:cursor-grabbing whitespace-nowrap select-none bg-transparent transition ${
+                  isSelected ? 'ring-2 ring-blue-500 rounded bg-transparent shadow-sm' : 'hover:outline hover:outline-blue-400 bg-transparent'
                 }`}
               >
                 {isSelected && (
@@ -750,9 +751,10 @@ export const PDFPage: React.FC<PDFPageProps> = ({
                 textDecoration: t.textDecoration || 'none',
                 opacity: t.opacity || 1.0,
                 fontFamily: t.fontFamily,
+                backgroundColor: 'transparent',
               }}
-              className={`absolute z-20 cursor-grab active:cursor-grabbing whitespace-pre-wrap select-none p-1 transition-shadow ${
-                isSelected ? 'ring-2 ring-blue-500 rounded bg-blue-500/10 shadow-md' : 'hover:outline hover:outline-blue-400 hover:outline-1 rounded'
+              className={`absolute z-20 cursor-grab active:cursor-grabbing whitespace-pre-wrap select-none p-1 bg-transparent transition-shadow ${
+                isSelected ? 'ring-2 ring-blue-500 rounded bg-transparent shadow-sm' : 'hover:outline hover:outline-blue-400 hover:outline-1 rounded bg-transparent'
               }`}
             >
               {isSelected && (
@@ -978,7 +980,7 @@ export const PDFPage: React.FC<PDFPageProps> = ({
           width={editingTextItem.width}
           height={editingTextItem.height}
           fontSize={editingTextItem.item.fontSize * scale}
-          backgroundColor={editingTextItem.detectedBgColor || '#ffffff'}
+          backgroundColor="transparent"
           onCommit={(newText) => {
             const repId = `rep-${page.pageIndex}-${editingTextItem.item.id}`;
             onAddTextReplacement({
@@ -990,8 +992,8 @@ export const PDFPage: React.FC<PDFPageProps> = ({
               fontFamily: 'Helvetica',
               fontSize: editingTextItem.item.fontSize,
               color: '#000000',
-              backgroundColor: editingTextItem.detectedBgColor || '#ffffff',
-              whitewashOriginal: true,
+              backgroundColor: 'transparent',
+              whitewashOriginal: false,
               x: editingTextItem.item.bounds.x,
               y: editingTextItem.item.bounds.y,
             });

@@ -83,6 +83,7 @@ async function runE2ETest() {
         fontWeight: 'bold' as const,
         color: '#1a2440',
         backgroundColor: '#ffffff',
+        whitewashOriginal: true,
       },
       {
         id: 'rep-amount',
@@ -95,6 +96,7 @@ async function runE2ETest() {
         fontWeight: 'bold' as const,
         color: '#141f40',
         backgroundColor: '#f2f5fc',
+        whitewashOriginal: true,
       },
     ],
     addedTexts: [],
