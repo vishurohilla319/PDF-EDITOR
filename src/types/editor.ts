@@ -29,14 +29,17 @@ export interface TextReplacement {
   id: string;
   pageIndex: number;
   originalText: string;
-  originalBounds: PDFRect; // in PDF points (bottom-left)
+  originalBounds: PDFRect; // in PDF points (bottom-left) - location of original text to whitewash
   newText: string;
   fontFamily: string;
   fontSize: number;
   fontWeight?: 'normal' | 'bold';
   fontStyle?: 'normal' | 'italic';
   color: string;
-  backgroundColor: string; // cover/whiteout rectangle color
+  backgroundColor?: string; // 'transparent' by default so it never overlays table lines
+  whitewashOriginal?: boolean; // true by default to whitewash text before editing
+  x?: number; // current X position of text box
+  y?: number; // current Y position of text box
 }
 
 export interface AddedTextElement {

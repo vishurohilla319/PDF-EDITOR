@@ -135,26 +135,34 @@ export async function exportPDF({
       (r) => r.pageIndex === originalPageIndex
     );
     for (const rep of pageReplacements) {
-      // Step A: Cover original text with background rectangle
-      const padX = 1.5;
-      const padY = 1.5;
-      outPage.drawRectangle({
-        x: rep.originalBounds.x - padX,
-        y: rep.originalBounds.y - padY,
-        width: rep.originalBounds.width + padX * 2,
-        height: rep.originalBounds.height + padY * 2,
-        color: hexToRgb(rep.backgroundColor || '#ffffff'),
-        opacity: 1.0,
-      });
+      // Step A: Whitewash original text before edit at its exact original bounds
+      // Zero excess padding so table grid borders and lines are NEVER covered or erased
+      if (rep.whitewashOriginal !== false) {
+        const coverColor =
+          rep.backgroundColor && rep.backgroundColor !== 'transparent'
+            ? rep.backgroundColor
+            : '#ffffff';
+        outPage.drawRectangle({
+          x: rep.originalBounds.x,
+          y: rep.originalBounds.y,
+          width: rep.originalBounds.width,
+          height: rep.originalBounds.height,
+          color: hexToRgb(coverColor),
+          opacity: 1.0,
+        });
+      }
 
-      // Step B: Draw replacement text at exact PDF coordinates
+      // Step B: Draw replacement text at target coordinates with transparent box background
+      const posX = rep.x !== undefined ? rep.x : rep.originalBounds.x;
+      const posY = rep.y !== undefined ? rep.y : rep.originalBounds.y;
+
       const font = getFont(rep.fontFamily, rep.fontWeight === 'bold', rep.fontStyle === 'italic');
       const sanitized = sanitizeTextForPdf(rep.newText);
       const fontSize = rep.fontSize || rep.originalBounds.height * 0.8;
-      const baselineY = rep.originalBounds.y + (fontSize * 0.15);
+      const baselineY = posY + (fontSize * 0.15);
 
       outPage.drawText(sanitized, {
-        x: rep.originalBounds.x,
+        x: posX,
         y: baselineY,
         size: fontSize,
         font: font,

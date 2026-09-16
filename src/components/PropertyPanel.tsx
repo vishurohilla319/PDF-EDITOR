@@ -193,10 +193,10 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
                   <span className="text-[10px] text-slate-500 block mb-0.5">X (Horizontal)</span>
                   <input
                     type="number"
-                    value={Math.round(replacement.originalBounds.x)}
+                    value={Math.round(replacement.x !== undefined ? replacement.x : replacement.originalBounds.x)}
                     onChange={(e) =>
                       onUpdateTextReplacement(replacement.id, {
-                        originalBounds: { ...replacement.originalBounds, x: Number(e.target.value) },
+                        x: Number(e.target.value),
                       })
                     }
                     className="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white focus:border-blue-500 focus:outline-none"
@@ -206,10 +206,10 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
                   <span className="text-[10px] text-slate-500 block mb-0.5">Y (Vertical)</span>
                   <input
                     type="number"
-                    value={Math.round(replacement.originalBounds.y)}
+                    value={Math.round(replacement.y !== undefined ? replacement.y : replacement.originalBounds.y)}
                     onChange={(e) =>
                       onUpdateTextReplacement(replacement.id, {
-                        originalBounds: { ...replacement.originalBounds, y: Number(e.target.value) },
+                        y: Number(e.target.value),
                       })
                     }
                     className="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white focus:border-blue-500 focus:outline-none"
@@ -219,6 +219,37 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
               <p className="text-[10px] text-slate-500 mt-1">
                 Drag on page or use Arrow keys (Shift+Arrow for 10pt)
               </p>
+            </div>
+
+            {/* Whitewash & Transparency Options */}
+            <div className="pt-2 border-t border-slate-800 space-y-2">
+              <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={replacement.whitewashOriginal !== false}
+                  onChange={(e) =>
+                    onUpdateTextReplacement(replacement.id, {
+                      whitewashOriginal: e.target.checked,
+                    })
+                  }
+                  className="rounded bg-slate-800 border-slate-700 text-blue-600 focus:ring-0"
+                />
+                <span>Whitewash original text before edit</span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={!replacement.backgroundColor || replacement.backgroundColor === 'transparent'}
+                  onChange={(e) =>
+                    onUpdateTextReplacement(replacement.id, {
+                      backgroundColor: e.target.checked ? 'transparent' : '#ffffff',
+                    })
+                  }
+                  className="rounded bg-slate-800 border-slate-700 text-blue-600 focus:ring-0"
+                />
+                <span>Transparent box (never overlays lines)</span>
+              </label>
             </div>
           </div>
         )}

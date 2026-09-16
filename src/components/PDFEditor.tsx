@@ -94,12 +94,7 @@ export const PDFEditor: React.FC<PDFEditorProps> = ({
     (id: string, type: string, x: number, y: number) => {
       if (type === 'text') doc.updateText(id, { x, y });
       else if (type === 'replacement') {
-        const rep = doc.docState.textReplacements.find((r) => r.id === id);
-        if (rep) {
-          doc.updateTextReplacement(id, {
-            originalBounds: { ...rep.originalBounds, x, y },
-          });
-        }
+        doc.updateTextReplacement(id, { x, y });
       } else if (type === 'image') doc.updateImage(id, { x, y });
       else if (type === 'signature') doc.updateSignature(id, { x, y });
       else if (type === 'shape') doc.updateShape(id, { x, y });
@@ -157,7 +152,11 @@ export const PDFEditor: React.FC<PDFEditorProps> = ({
           if (t) handleUpdateElementPosition(item.id, 'text', t.x + dx, t.y + dy);
         } else if (item.type === 'replacement') {
           const r = doc.docState.textReplacements.find((el) => el.id === item.id);
-          if (r) handleUpdateElementPosition(item.id, 'replacement', r.originalBounds.x + dx, r.originalBounds.y + dy);
+          if (r) {
+            const curX = r.x !== undefined ? r.x : r.originalBounds.x;
+            const curY = r.y !== undefined ? r.y : r.originalBounds.y;
+            handleUpdateElementPosition(item.id, 'replacement', curX + dx, curY + dy);
+          }
         } else if (item.type === 'image') {
           const img = doc.docState.images.find((el) => el.id === item.id);
           if (img) handleUpdateElementPosition(item.id, 'image', img.x + dx, img.y + dy);

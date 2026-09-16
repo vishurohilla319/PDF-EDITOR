@@ -504,58 +504,85 @@ export const PDFPage: React.FC<PDFPageProps> = ({
           );
         })}
 
-      {/* 4. Text Replacements Layer (Overlays replacement text exactly over original) */}
+      {/* 4. Text Replacements Layer (Whitewash original text + transparent text box) */}
       {textReplacements
         .filter((r) => r.pageIndex === page.pageIndex)
         .map((r) => {
-          const cRect = pdfRectToCanvasRect(r.originalBounds, page.height, scale);
+          const posX = r.x !== undefined ? r.x : r.originalBounds.x;
+          const posY = r.y !== undefined ? r.y : r.originalBounds.y;
+
+          const textBounds = {
+            x: posX,
+            y: posY,
+            width: r.originalBounds.width,
+            height: r.originalBounds.height,
+          };
+
+          const cRect = pdfRectToCanvasRect(textBounds, page.height, scale);
+          const origRect = pdfRectToCanvasRect(r.originalBounds, page.height, scale);
           const isSelected = selectedItem?.id === r.id;
+
+          const coverColor =
+            r.backgroundColor && r.backgroundColor !== 'transparent'
+              ? r.backgroundColor
+              : '#ffffff';
+
           return (
-            <div
-              key={r.id}
-              onMouseDown={(e) =>
-                startDraggingElement(e, r.id, 'replacement', r.originalBounds.x, r.originalBounds.y)
-              }
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelectElement(r.id, 'replacement', page.pageIndex);
-              }}
-              style={{
-                left: `${cRect.x}px`,
-                top: `${cRect.y}px`,
-                minWidth: `${cRect.width}px`,
-                height: `${cRect.height}px`,
-                backgroundColor: r.backgroundColor || '#ffffff',
-                color: r.color || '#000000',
-                fontSize: `${r.fontSize * scale}px`,
-                fontWeight: r.fontWeight || 'normal',
-                fontStyle: r.fontStyle || 'normal',
-                fontFamily: r.fontFamily,
-                lineHeight: `${cRect.height}px`,
-              }}
-              className={`absolute z-20 px-0.5 cursor-grab active:cursor-grabbing whitespace-nowrap select-none transition ${
-                isSelected ? 'ring-2 ring-blue-500 rounded shadow-md' : 'hover:outline hover:outline-blue-400'
-              }`}
-            >
-              {isSelected && (
+            <React.Fragment key={r.id}>
+              {/* Step A: Whitewash cover over original text before edit */}
+              {r.whitewashOriginal !== false && (
                 <div
-                  onMouseDown={(e) =>
-                    startDraggingElement(
-                      e,
-                      r.id,
-                      'replacement',
-                      r.originalBounds.x,
-                      r.originalBounds.y
-                    )
-                  }
-                  className="absolute -top-6 left-0 bg-blue-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow flex items-center gap-1 cursor-grab active:cursor-grabbing pointer-events-auto select-none"
-                >
-                  <Move className="w-2.5 h-2.5" />
-                  <span>DRAG TO MOVE</span>
-                </div>
+                  style={{
+                    left: `${origRect.x}px`,
+                    top: `${origRect.y}px`,
+                    width: `${origRect.width}px`,
+                    height: `${origRect.height}px`,
+                    backgroundColor: coverColor,
+                  }}
+                  className="absolute z-14 pointer-events-none"
+                />
               )}
-              {r.newText}
-            </div>
+
+              {/* Step B: Interactive Transparent Text Box */}
+              <div
+                onMouseDown={(e) =>
+                  startDraggingElement(e, r.id, 'replacement', posX, posY)
+                }
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelectElement(r.id, 'replacement', page.pageIndex);
+                }}
+                style={{
+                  left: `${cRect.x}px`,
+                  top: `${cRect.y}px`,
+                  minWidth: `${cRect.width}px`,
+                  height: `${cRect.height}px`,
+                  backgroundColor: 'transparent',
+                  color: r.color || '#000000',
+                  fontSize: `${r.fontSize * scale}px`,
+                  fontWeight: r.fontWeight || 'normal',
+                  fontStyle: r.fontStyle || 'normal',
+                  fontFamily: r.fontFamily,
+                  lineHeight: `${cRect.height}px`,
+                }}
+                className={`absolute z-20 px-0.5 cursor-grab active:cursor-grabbing whitespace-nowrap select-none transition ${
+                  isSelected ? 'ring-2 ring-blue-500 rounded shadow-md' : 'hover:outline hover:outline-blue-400'
+                }`}
+              >
+                {isSelected && (
+                  <div
+                    onMouseDown={(e) =>
+                      startDraggingElement(e, r.id, 'replacement', posX, posY)
+                    }
+                    className="absolute -top-6 left-0 bg-blue-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow flex items-center gap-1 cursor-grab active:cursor-grabbing pointer-events-auto select-none"
+                  >
+                    <Move className="w-2.5 h-2.5" />
+                    <span>DRAG TO MOVE</span>
+                  </div>
+                )}
+                {r.newText}
+              </div>
+            </React.Fragment>
           );
         })}
 
@@ -925,7 +952,10 @@ export const PDFPage: React.FC<PDFPageProps> = ({
               fontFamily: 'Helvetica',
               fontSize: editingTextItem.item.fontSize,
               color: '#000000',
-              backgroundColor: '#ffffff',
+              backgroundColor: 'transparent',
+              whitewashOriginal: true,
+              x: editingTextItem.item.bounds.x,
+              y: editingTextItem.item.bounds.y,
             });
             setEditingTextItem(null);
           }}
