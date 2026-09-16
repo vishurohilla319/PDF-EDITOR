@@ -413,8 +413,8 @@ export const PDFPage: React.FC<PDFPageProps> = ({
           fontFamily: 'Helvetica',
           fontSize: item.fontSize,
           color: '#000000',
-          backgroundColor: 'transparent',
-          whitewashOriginal: false,
+          backgroundColor: detectedBgColor || '#ffffff',
+          whitewashOriginal: true,
           x: item.bounds.x,
           y: item.bounds.y,
         });
@@ -559,7 +559,7 @@ export const PDFPage: React.FC<PDFPageProps> = ({
           const isSelected = selectedItem?.id === r.id;
 
           const shouldShowCover =
-            r.whitewashOriginal === true &&
+            r.whitewashOriginal !== false &&
             r.backgroundColor &&
             r.backgroundColor !== 'transparent' &&
             r.backgroundColor !== 'none';
@@ -971,7 +971,21 @@ export const PDFPage: React.FC<PDFPageProps> = ({
         className="absolute inset-0 pointer-events-none z-25"
       />
 
-      {/* 14. Inline Text Editor for Existing Text Replacement */}
+      {/* 14a. When editing existing text, delete/hide original text immediately from canvas view */}
+      {editingTextItem && (
+        <div
+          style={{
+            left: `${editingTextItem.canvasX}px`,
+            top: `${editingTextItem.canvasY}px`,
+            width: `${editingTextItem.width}px`,
+            height: `${editingTextItem.height}px`,
+            backgroundColor: editingTextItem.detectedBgColor || '#ffffff',
+          }}
+          className="absolute z-35 pointer-events-none"
+        />
+      )}
+
+      {/* 14b. Inline Text Editor for Existing Text Replacement */}
       {editingTextItem && (
         <InlineTextEditor
           initialText={editingTextItem.item.str}
@@ -980,7 +994,7 @@ export const PDFPage: React.FC<PDFPageProps> = ({
           width={editingTextItem.width}
           height={editingTextItem.height}
           fontSize={editingTextItem.item.fontSize * scale}
-          backgroundColor="transparent"
+          backgroundColor={editingTextItem.detectedBgColor || '#ffffff'}
           onCommit={(newText) => {
             const repId = `rep-${page.pageIndex}-${editingTextItem.item.id}`;
             onAddTextReplacement({
@@ -992,8 +1006,8 @@ export const PDFPage: React.FC<PDFPageProps> = ({
               fontFamily: 'Helvetica',
               fontSize: editingTextItem.item.fontSize,
               color: '#000000',
-              backgroundColor: 'transparent',
-              whitewashOriginal: false,
+              backgroundColor: editingTextItem.detectedBgColor || '#ffffff',
+              whitewashOriginal: true,
               x: editingTextItem.item.bounds.x,
               y: editingTextItem.item.bounds.y,
             });

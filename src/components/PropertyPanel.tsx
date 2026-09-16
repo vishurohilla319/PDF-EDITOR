@@ -224,7 +224,7 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
             {/* Background / Cover Options */}
             <div className="pt-2 border-t border-slate-800 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-300">Background</span>
+                <span className="text-xs font-semibold text-slate-300">Text Box Background</span>
                 <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-medium">
                   100% Transparent
                 </span>
@@ -233,7 +233,7 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
               <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
                 <input
                   type="checkbox"
-                  checked={Boolean(replacement.whitewashOriginal && replacement.backgroundColor && replacement.backgroundColor !== 'transparent')}
+                  checked={replacement.whitewashOriginal !== false && Boolean(replacement.backgroundColor && replacement.backgroundColor !== 'transparent')}
                   onChange={(e) =>
                     onUpdateTextReplacement(replacement.id, {
                       whitewashOriginal: e.target.checked,
@@ -242,25 +242,25 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
                   }
                   className="rounded bg-slate-800 border-slate-700 text-blue-600 focus:ring-0"
                 />
-                <span>Add background cover behind original text</span>
+                <span>Delete / erase original text behind</span>
               </label>
 
-              {Boolean(replacement.whitewashOriginal && replacement.backgroundColor && replacement.backgroundColor !== 'transparent') && (
+              {replacement.whitewashOriginal !== false && Boolean(replacement.backgroundColor && replacement.backgroundColor !== 'transparent') && (
                 <div>
                   <label className="text-[11px] text-slate-400 block mb-1">
-                    Cover Color
+                    Doc Background Match (Erase Color)
                   </label>
                   <div className="flex items-center gap-2">
                     <input
                       type="color"
-                      value={replacement.backgroundColor}
+                      value={replacement.backgroundColor || '#ffffff'}
                       onChange={(e) =>
                         onUpdateTextReplacement(replacement.id, {
                           backgroundColor: e.target.value,
                         })
                       }
                       className="w-7 h-7 rounded border border-slate-700 bg-slate-800 cursor-pointer p-0.5"
-                      title="Adjust cover color"
+                      title="Adjust erase background match color"
                     />
                     <div className="flex flex-wrap gap-1">
                       {['#ffffff', '#fdfbf7', '#f4f4f2', '#f2f5fc', '#f3f4f6', '#e2e8f0'].map((bg) => (
@@ -275,11 +275,14 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
                               ? 'border-blue-400 scale-110'
                               : 'border-slate-700'
                           }`}
-                          title={`Color: ${bg}`}
+                          title={`Doc Color: ${bg}`}
                         />
                       ))}
                     </div>
                   </div>
+                  <span className="text-[9px] text-slate-500 mt-0.5 block">
+                    Auto-matches document canvas tone so underlying lines remain intact.
+                  </span>
                 </div>
               )}
             </div>

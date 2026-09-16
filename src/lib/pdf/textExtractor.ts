@@ -28,14 +28,17 @@ export async function extractTextItemsFromPage(
     const fontHeight = item.height && item.height > 0 ? item.height : fontSize;
     const width = item.width && item.width > 0 ? item.width : str.length * (fontSize * 0.55);
 
-    // In PDF space, baseline is at ty. The text box extends upward by fontHeight,
-    // and slightly below baseline for descenders (~20% of font size).
-    const descenderOffset = fontSize * 0.15;
+    // In PDF space, baseline is at ty.
+    // Check if string contains descenders (g, j, p, q, y)
+    const hasDescenders = /[gjpqy]/.test(str);
+    const descenderOffset = hasDescenders ? fontSize * 0.18 : 0;
+    const glyphHeight = fontSize * 0.82 + descenderOffset;
+
     const bounds = {
       x: tx,
       y: ty - descenderOffset,
       width: width,
-      height: fontHeight + descenderOffset,
+      height: glyphHeight,
     };
 
     items.push({

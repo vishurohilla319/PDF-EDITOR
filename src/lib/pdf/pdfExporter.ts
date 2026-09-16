@@ -135,9 +135,9 @@ export async function exportPDF({
       (r) => r.pageIndex === originalPageIndex
     );
     for (const rep of pageReplacements) {
-      // Step A: Cover original text ONLY if whitewashOriginal is explicitly true and NOT transparent
+      // Step A: Cover original text so it is DELETED from the exported PDF
       if (
-        rep.whitewashOriginal === true &&
+        rep.whitewashOriginal !== false &&
         rep.backgroundColor &&
         rep.backgroundColor !== 'transparent' &&
         rep.backgroundColor !== 'none'
